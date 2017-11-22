@@ -1,0 +1,6 @@
+CREATE TABLE person (
+  id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(20), 
+  birth DATETIME, 
+  death DATETIME
+);

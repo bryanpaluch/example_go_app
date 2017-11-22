@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 var db *sql.DB
@@ -29,7 +31,7 @@ func TestMain(m *testing.M) {
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
 		var err error
-		dsn = fmt.Sprintf("root:secret@(localhost:%s)/mysql", resource.GetPort("3306/tcp"))
+		dsn = fmt.Sprintf("root:secret@(localhost:%s)/mysql?parseTime=true", resource.GetPort("3306/tcp"))
 		db, err = sql.Open("mysql", dsn)
 		if err != nil {
 			return err
@@ -54,6 +56,21 @@ func TestMigrate(t *testing.T) {
 	err := db.ConnectAndMigrate("./migrations")
 	if err != nil {
 		t.Error("failed to connect and migrate", err)
+		t.Fail()
+	}
+	_, err = db.GetPersonByID(context.Background(), 3)
+	if err == nil {
+		t.Error("there should be no person 3")
+		t.Fail()
+	}
+	person := &Person{0, "bryan", time.Now(), time.Now().Add(time.Hour * 5)}
+	err = db.AddPerson(context.Background(), person)
+	if err != nil {
+		t.Error("failed to add person", err)
+		t.Fail()
+	}
+	if person.ID == 0 {
+		t.Error("Failed to update ID value")
 		t.Fail()
 	}
 }

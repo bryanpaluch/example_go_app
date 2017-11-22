@@ -25,7 +25,7 @@ func main() {
 	start := time.Now()
 	log.Printf("starting example service, version=%s, commit=%s, branch=%s", version, commit, branch)
 
-	exampleDb, err := db.NewExampleDB(fmt.Sprintf("%s:%s@(%s:3306)/mysql",
+	exampleDb, err := db.NewExampleDB(fmt.Sprintf("%s:%s@(%s:3306)/mysql?parseTime=true",
 		GetEnv("DB_USER", "root"),
 		GetEnv("DB_PASS", "secret"),
 		GetEnv("DB_HOST", "localhost")))

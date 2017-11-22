@@ -3,15 +3,18 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/cenk/backoff"
 	_ "github.com/go-sql-driver/mysql"
+	sqlx "github.com/jmoiron/sqlx"
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database/mysql"
 	_ "github.com/mattes/migrate/source/file"
+	"time"
 )
 
-func migrateDB(db *sql.DB, directory string) error {
-	driver, _ := mysql.WithInstance(db, &mysql.Config{})
+func migrateDB(db *sqlx.DB, directory string) error {
+	driver, _ := mysql.WithInstance(db.DB, &mysql.Config{})
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://"+directory,
 		"mysql",
@@ -20,7 +23,6 @@ func migrateDB(db *sql.DB, directory string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
 
 	err = m.Up()
 	if err == migrate.ErrNoChange {
@@ -35,7 +37,7 @@ type DB interface {
 
 type ExampleDB struct {
 	dsn string
-	*sql.DB
+	*sqlx.DB
 }
 
 func NewExampleDB(dsn string) (*ExampleDB, error) {
@@ -44,7 +46,7 @@ func NewExampleDB(dsn string) (*ExampleDB, error) {
 
 func (edb *ExampleDB) ConnectAndMigrate(directory string) error {
 	err := backoff.Retry(func() error {
-		conn, err := sql.Open("mysql", edb.dsn)
+		conn, err := sqlx.Open("mysql", edb.dsn)
 		if err != nil {
 			return err
 		}
@@ -65,8 +67,31 @@ func (edb *ExampleDB) ConnectAndMigrate(directory string) error {
 }
 
 type Person struct {
+	ID    int64
+	Name  string
+	Birth time.Time
+	Death time.Time
 }
 
 func (edb *ExampleDB) GetPersonByID(ctx context.Context, id int) (*Person, error) {
-	panic("not implemented")
+	person := &Person{}
+	err := edb.GetContext(ctx, person, "SELECT * FROM `person` WHERE `id` = ?", id)
+	return person, err
+}
+
+func (edb *ExampleDB) AddPerson(ctx context.Context, p *Person) error {
+	result := edb.MustExec("INSERT into `person` (`name`, `birth`, `death`) VALUES ( ?, ?, ?)", p.Name, p.Birth, p.Death)
+	return checkResultAndSetID(&p.ID, result)
+}
+
+func checkResultAndSetID(id *int64, result sql.Result) error {
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return fmt.Errorf("insert did not add a row")
+	}
+	*id, err = result.LastInsertId()
+	return err
 }
