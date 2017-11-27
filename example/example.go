@@ -8,10 +8,10 @@ import (
 //go:generate mockgen -destination=../mocks/mock_example.go -package=mocks github.com/bryanpaluch/example_go_app/example DB
 
 type Person struct {
-	ID    int64     `json:"id" db:"id"`
-	Name  string    `json:"name" db:"name"`
-	Birth time.Time `json:"birth" db:"birth"`
-	Death time.Time `json:"death" db:"death"`
+	ID    int64      `json:"id" db:"id"`
+	Name  string     `json:"name" db:"name"`
+	Birth *time.Time `json:"birth,omitempty" db:"birth"`
+	Death *time.Time `json:"death,omitempty" db:"death"`
 }
 
 type DB interface {

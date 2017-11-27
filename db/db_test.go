@@ -64,7 +64,9 @@ func TestMigrate(t *testing.T) {
 		t.Error("there should be no person 3")
 		t.Fail()
 	}
-	person := &example.Person{Name: "bryan", Birth: time.Now(), Death: time.Now().Add(time.Hour * 5)}
+	birth := time.Now()
+	death := time.Now()
+	person := &example.Person{Name: "bryan", Birth: &birth, Death: &death}
 	err = db.AddPerson(context.Background(), person)
 	if err != nil {
 		t.Error("failed to add person", err)
