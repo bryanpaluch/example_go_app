@@ -15,7 +15,7 @@ BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
 
 # Build the project
-all: clean bootstrap test vet linux darwin docker
+all: clean bootstrap generate test vet linux darwin docker
 
 # Build linux binary
 linux: 
