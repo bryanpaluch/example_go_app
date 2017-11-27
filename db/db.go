@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/bryanpaluch/example_go_app/example"
 	"github.com/cenk/backoff"
 	_ "github.com/go-sql-driver/mysql"
 	sqlx "github.com/jmoiron/sqlx"
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database/mysql"
 	_ "github.com/mattes/migrate/source/file"
-	"time"
 )
 
 func migrateDB(db *sqlx.DB, directory string) error {
@@ -29,10 +29,6 @@ func migrateDB(db *sqlx.DB, directory string) error {
 		return nil
 	}
 	return err
-}
-
-type DB interface {
-	GetPersonByID(ctx context.Context, id int) (*Person, error)
 }
 
 type ExampleDB struct {
@@ -66,20 +62,13 @@ func (edb *ExampleDB) ConnectAndMigrate(directory string) error {
 	return migrateDB(edb.DB, directory)
 }
 
-type Person struct {
-	ID    int64
-	Name  string
-	Birth time.Time
-	Death time.Time
-}
-
-func (edb *ExampleDB) GetPersonByID(ctx context.Context, id int) (*Person, error) {
-	person := &Person{}
+func (edb *ExampleDB) GetPersonByID(ctx context.Context, id int) (*example.Person, error) {
+	person := &example.Person{}
 	err := edb.GetContext(ctx, person, "SELECT * FROM `person` WHERE `id` = ?", id)
 	return person, err
 }
 
-func (edb *ExampleDB) AddPerson(ctx context.Context, p *Person) error {
+func (edb *ExampleDB) AddPerson(ctx context.Context, p *example.Person) error {
 	result := edb.MustExec("INSERT into `person` (`name`, `birth`, `death`) VALUES ( ?, ?, ?)", p.Name, p.Birth, p.Death)
 	return checkResultAndSetID(&p.ID, result)
 }

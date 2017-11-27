@@ -3,6 +3,9 @@ DOCKER_IMAGE = testapp
 VET_REPORT = vet.report
 TEST_REPORT = tests.xml
 GOARCH = amd64
+COVERAGEOUT := ./build/coverage.out
+COVERAGETMP := ./build/coverage.tmp
+PKGS := $(shell go list ./...)
 
 VERSION?=?
 COMMIT=$(shell git rev-parse HEAD)
@@ -12,7 +15,7 @@ BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
 
 # Build the project
-all: clean test vet linux darwin 
+all: clean bootstrap test vet linux darwin docker
 
 # Build linux binary
 linux: 
@@ -23,8 +26,22 @@ darwin:
 	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/${BINARY}-darwin-${GOARCH} main/main.go ; 
 
 # Run go tests on all packages
-test: clean bootstrap
-	go test ./...
+test: clean
+	@echo 'mode: atomic' > $(COVERAGEOUT) \
+	exitcode=0; \
+	for pkg in $(PKGS); do \
+		go test -v -race -coverprofile=$(COVERAGETMP) -covermode=atomic $$pkg 2>&1 | grep -v 'warning: no packages being tested depend on'; \
+		testexitcode=$$?; \
+		if [ $$testexitcode -ne 0 ]; then \
+			exitcode=$$testexitcode; \
+		fi; \
+		if [ -f $(COVERAGETMP) ]; then \
+			grep -v -e 'mode: set' -e 'mode: atomic' $(COVERAGETMP) >> $(COVERAGEOUT); \
+			rm $(COVERAGETMP); \
+		fi; \
+	done; \
+	go tool cover -html=$(COVERAGEOUT) -o ./build/coverage.html; \
+	exit $$exitcode
 
 # Run go vet on all packages
 vet:
@@ -45,5 +62,9 @@ docker: linux
 
 prepare:
 	mkdir -p ~/.docker_data/exampleapp
+
+generate:
+	mkdir -p ./mocks
+	go generate ./...
 
 .PHONY: linux darwin test vet fmt clean docker

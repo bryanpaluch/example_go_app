@@ -73,6 +73,12 @@
   version = "v0.5"
 
 [[projects]]
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  revision = "13f360950a79f5864a972c786a10a50e44b69541"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
   packages = [".","reflectx"]
@@ -141,6 +147,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "164af2ff12c77c91a6d9b5f5c2fea10b23fe90b17012068fb18324186d05ec7a"
+  inputs-digest = "1ed45ae5904cfa4470f77c3f5bd3612f388da1349f4f1b956d970d08e2c119c7"
   solver-name = "gps-cdcl"
   solver-version = 1

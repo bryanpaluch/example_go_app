@@ -2,36 +2,37 @@ package controller
 
 import (
 	"encoding/json"
-	"github.com/bryanpaluch/example_go_app/db"
+	"github.com/bryanpaluch/example_go_app/example"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"log"
 	"net/http"
 	"strconv"
 )
 
 type Router struct {
-	router chi.Router
-	db     db.DB
+	chi.Router
+	db example.DB
 }
 
-func NewRouter(d db.DB) (*Router, error) {
-	return &Router{nil, d}, nil
-}
-
-func (r *Router) Start() {
+func NewRouter(d example.DB) (*Router, error) {
 	mux := chi.NewRouter()
+	r := &Router{mux, d}
+
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 
 	mux.Get("/person/{id}", r.GetPersonByID)
-	http.ListenAndServe(":8080", mux)
+
+	return r, nil
+}
+
+func (r *Router) Start() {
+	http.ListenAndServe(":8080", r)
 }
 
 func (r *Router) GetPersonByID(w http.ResponseWriter, req *http.Request) {
-	log.Println("get person by id hit")
 	id := chi.URLParam(req, "id")
 	idNum, err := strconv.Atoi(id)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/bryanpaluch/example_go_app/example"
 	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/ory-am/dockertest.v3"
 	"log"
@@ -63,7 +64,7 @@ func TestMigrate(t *testing.T) {
 		t.Error("there should be no person 3")
 		t.Fail()
 	}
-	person := &Person{0, "bryan", time.Now(), time.Now().Add(time.Hour * 5)}
+	person := &example.Person{Name: "bryan", Birth: time.Now(), Death: time.Now().Add(time.Hour * 5)}
 	err = db.AddPerson(context.Background(), person)
 	if err != nil {
 		t.Error("failed to add person", err)
